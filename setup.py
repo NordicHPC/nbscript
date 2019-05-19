@@ -16,7 +16,7 @@ setuptools.setup(
     #py_modules=["nbscript"],
     entry_points={
         'console_scripts': [
-            'nbscript=nbscript.nbscript:main',
+            'nbscript=nbscript.nbscript:nbscript',
             'snotebook=nbscript.snotebook:main',
         ],
     },
