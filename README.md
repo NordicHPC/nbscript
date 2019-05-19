@@ -1,31 +1,49 @@
 # Run Jupyter notebooks as scripts
 
-Jupyter notebooks are designed exclusively for interactive use, but
+Jupyter notebooks are designed almost exclusively for interactive use, but
 many people want to use them for heavy-duty computational usage.
 `nbscript` is designed to process notebooks as scripts and provide the
 most common script functions: clear start and end, arguments (argv),
-(stdin) and stdout, and so on.  This takes the view that we provide a
-logical transition to non-notebook programs.
+(stdin) and stdout, and so on.
 
 We also take the perspective of batch processing, so also have a wrapper
 that allows you to submit notebooks as Slurm scripts (similar sbatch
-with a Python as the interperter).
+with a Python as the interpreter).
+
+Notebooks are very good for interactive work, but for large
+computation interactive just isn't an efficient use of resources.  For
+other expensive resources that can't be shared (GPUs for example),
+interactive work even for development can be a bit questionable.  A
+proper course of action would be to create proper programs to run
+separate from notebooks... but sometimes people prefer to stay in
+notebooks.
+
+Many other modules (see references below) try to allow notebooks to be
+run, but we take the viewpoint that the traditional scripting
+interface is good and notebooks should be made like scripts: `nbscript
+notebook.ipynb` should behave similarly to `python notebook.py`.  This
+also allows us to provide a logical pathway to non-notebook programs.
+
+
 
 ## Usage
 
-Not all of this functionality exists yet, but this shows the desired
-end state.
+nbscript is still in development, so not all of this functionality
+exists yet.  In general, `nbscript notebook.ipynb` should have as
+similar an interface as `python notebook.py`.
+
 
 Run a notebook from the command line:
 
-* `nbscript nb.ipynb arg1 arg2 ...`.  Within the notebook.  You can
+* `nbscript nb.ipynb arg1 arg2 ...`.  Within the notebook, you can
   access the arguments by `import nbscript ; nbscript.argv` (these are
-  currently accessed via environment variables).  Note that `argv[0]`
+  currently transferred via environment variables).  Note that `argv[0]`
   is the script name if it is known, otherwise `None`.
 
 * By default, only the output of the cells is printed to stdout.
   Options may used to save the notebook to a file in any of
   nbconvert's supported output formats.
+
 
 You may also run a notebook via IPython extensions:
 
@@ -34,9 +52,31 @@ You may also run a notebook via IPython extensions:
   Instead, it is saved to a HTML file with the output and errors.  If
   you don't give an output name, the output is timestamped.
 
+  * Currently not implemented, use `!nbscript` instead.
+
 * `nbscript` sets the `NBSCRIPT_RUNNING` environment variable, and if
   this is already set it won't run again.  That way, you can have a
   notebook execute itself with the `%nbscript`magic function.
+
+
+Interface within notebooks:
+
+* `import nbscript ; nbscript.argv` is the `argv` in analogy to
+  `sys.argv`.  (json-encoded in the environment variable `NB_ARGV`).
+
+  * One would use `argparse` with `nbscript.argv`, in particularly
+    `parser.parse_args(args=nbscript.argv[1:])`.
+
+* Other environment variables: `NB_NAME` is the notebook name (note
+  that there is no way for Jupyter kernels to know the currently
+  executing notebook name, this seems to be intentional because it's a
+  protocol layer violation).
+
+* `nbscript` sets the environment variable `NBSCRIPT_RUNNING` before
+  it executes a notebook, and if this is already set then it will do
+  nothing if it tries to execute again (print an error message and
+  exit).  This is so that an notebook can `nbscript`-execute itself
+  without recursive execution.  This behavior is up for debate.
 
 
 Submit a notebook via Slurm
@@ -49,10 +89,14 @@ Submit a notebook via Slurm
 * Similar to the `%nbscript` magic function, there is the `%snotebook`
   magic function.
 
-Serializing output state:
 
-* It's useful to be able to play with the output variables after batch
-  processing, and for that we need to serialize somehow.
+Saving output state:
+
+* When a notebook is run non-interactively, it would be useful to save
+  the state so that the output variables can be re-loaded and played
+  with.  To do that, we should find some way to serialize the state
+  and re-load it.  It would be nice if nbscript could automate this,
+  but perhaps that makes things too fragile.
 
 * The [dill](https://pypi.org/project/dill/) module is supposed to be
   able to serialize most Python objects (but starts failing at some
@@ -85,10 +129,21 @@ which happens to be run.  that would have run, arguments, stdout, etc.
   notebooks.
 
 * https://pypi.org/project/runipy/ is a pretty basic script similar to
-  `nbconvert --execute` it seems.
+  `nbconvert --execute` it seems (deprecated in favor of `nbconvert
+  --execute`).
 
 * Several tools called `nbrun`, some of which are deprecated in favor
   of `nbconvert`.
+
+* https://github.com/takluyver/nbparameterise also dynamically
+  replaces values in cells.
+
+* https://github.com/NERSC/slurm-magic is IPython magic functions for
+  interacting with Slurm.  It doesn't do anything special about the
+  notebook format.  The `%%sbatch` magic submits a cell as a Slurm
+  shell script and probably the `%srun` magic runs a command line.
+  This makes a logical companion to `nbscript` and is perhaps better
+  than an interface we might make.
 
 * and many more...
 
