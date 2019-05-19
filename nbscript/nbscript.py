@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import logging
 import os
 import re
 import shlex
@@ -12,6 +13,9 @@ import time
 import nbformat
 import nbconvert
 
+LOG = logging.getLogger('nbscript')
+logging.lastResort.setLevel(logging.DEBUG)
+
 if 'NB_ARGV' in os.environ:
     argv = json.loads(os.environ['NB_ARGV'])
 else:
@@ -20,7 +24,7 @@ else:
 
 def nbscript(argv=sys.argv[1:]):
     if os.environ.get('NBSCRIPT_RUNNING') is not None:
-        print("Detected that we are already in snotebook... not executing again.")
+        LOG.critical("Detected that we are already in snotebook... not executing again.")
         exit(0)
 
     parser_outer = argparse.ArgumentParser(usage="nbscript [nbscript and nbconvert args] notebook [nb_argv ...]")
@@ -38,8 +42,11 @@ def nbscript(argv=sys.argv[1:]):
     # `nbconvert_args` is everything unknown *before* the `notebook`
     # argument, nb_argv is everything unknown after.
     args, nbconvert_args        = parser_outer.parse_known_args(argv)
-    print(args)
-    print("nbconvert_args:", nbconvert_args)
+
+    if args.verbose:
+        LOG.setLevel(logging.DEBUG)
+    LOG.debug('args: %s', args)
+    LOG.debug("nbconvert_args: %s", nbconvert_args)
     sys.stdout.flush()
 
 
@@ -84,8 +91,8 @@ def nbscript(argv=sys.argv[1:]):
                     *output, *nbconvert_args,
                     args.notebook,
                     ]
-    print(cmd_nbconvert)
-    print('NB_ARGV:', os.environ.get('NB_ARGV'))
+    LOG.debug('cmd_nbconvert: %s', cmd_nbconvert)
+    LOG.debug('NB_ARGV: %s', os.environ.get('NB_ARGV'))
     sys.stdout.flush()
 
     p = subprocess.Popen(cmd_nbconvert)

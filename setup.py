@@ -17,7 +17,7 @@ setuptools.setup(
     entry_points={
         'console_scripts': [
             'nbscript=nbscript.nbscript:nbscript',
-            'snotebook=nbscript.snotebook:main',
+            'snotebook=nbscript.snotebook:snotebook',
         ],
     },
     classifiers=[
