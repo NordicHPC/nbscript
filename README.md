@@ -4,7 +4,8 @@ Jupyter notebooks are designed exclusively for interactive use, but
 many people want to use them for heavy-duty computational usage.
 `nbscript` is designed to process notebooks as scripts and provide the
 most common script functions: clear start and end, arguments (argv),
-(stdin) and stdout, and so on.
+(stdin) and stdout, and so on.  This takes the view that we provide a
+logical transition to non-notebook programs.
 
 We also take the perspective of batch processing, so also have a wrapper
 that allows you to submit notebooks as Slurm scripts (similar sbatch
@@ -73,13 +74,15 @@ see the notebooks as a first-class script, but as an interactive thing
 which happens to be run.  that would have run, arguments, stdout, etc.
 
 
+* https://github.com/nteract/papermill seems to be one of the most
+  similar projects to this.  Cells are tagged as containing
+  parameters, which means that they can be overridden from the command
+  line. It still takes the view that this is mainly a notebook.
+
 * [nbconvert](https://nbconvert.readthedocs.io/en/latest/) is the
   default way for executing notebooks.  There is no default way to
   pass arguments and output formats are designed to look like
   notebooks.
-
-* https://github.com/nteract/papermill - tag cells with "parameters"
-  to override values from command line.
 
 * https://pypi.org/project/runipy/ is a pretty basic script similar to
   `nbconvert --execute` it seems.
