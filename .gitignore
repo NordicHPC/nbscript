@@ -1,3 +1,5 @@
 /*.egg-info
 /.cache
 .ipynb_checkpoints
+*.html
+*.out
