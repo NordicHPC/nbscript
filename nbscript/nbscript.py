@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import contextlib
 import json
 import logging
 import os
@@ -21,6 +22,21 @@ if 'NB_ARGV' in os.environ:
 else:
     argv = None
 
+DEFAULT_FORMAT = 'markdown'
+# extension  -->  nbconvert --to format
+EXT_MAP = {'ipynb': 'notebook', 'md': 'markdown', 'txt': 'asciidoc'}
+# nbconvert --to format  -->  extension
+FORMAT_MAP = {v: k for k, v in EXT_MAP.items()}
+
+
+@contextlib.contextmanager
+def setenv_context(key, value):
+    """Set an environment variable as a context manager, restore it after"""
+    old = os.environ.get(key)
+    os.environ[key] = value
+    yield
+    if old is None:   del os.environ[key]
+    else:             os.environ[key] = old
 
 def nbscript(argv=sys.argv[1:]):
     if os.environ.get('NBSCRIPT_RUNNING') is not None:
@@ -30,14 +46,19 @@ def nbscript(argv=sys.argv[1:]):
     parser_outer = argparse.ArgumentParser(usage="nbscript [nbscript and nbconvert args] notebook [nb_argv ...]")
     parser_outer.add_argument("--to", help="Convert to this format (same as nbconvert --to option).")
     #parser_outer.add_argument("--export", "-e", action='append', help="Set environment variable (format NAME=VALUE)")
-    parser_outer.add_argument("--output", "-o", help="Filename to write to")
+    parser_outer.add_argument("--output", "-o",
+                              help="Filename to write to")
+    parser_outer.add_argument("--save", action='store_true',
+                              help="Save the notebook with an automatic filename")
     parser_outer.add_argument("--timestamp", "--ts", action='store_true',
                               help="Timestamp output filename (timestamp automatically "
                                    "added before extension)")
     parser_outer.add_argument("--verbose", "-v", action="store_true",
                               help="Verbose")
-    parser_outer.add_argument("notebook", help="Input notebook")
-    parser_outer.add_argument("nb_argv", nargs=argparse.REMAINDER, help="Output filename (basename, no extension)")
+    parser_outer.add_argument("notebook",
+                              help="Input notebook")
+    parser_outer.add_argument("nb_argv", nargs=argparse.REMAINDER,
+                              help="Output filename (basename, no extension)")
 
     # `nbconvert_args` is everything unknown *before* the `notebook`
     # argument, nb_argv is everything unknown after.
@@ -65,27 +86,46 @@ def nbscript(argv=sys.argv[1:]):
 
     #output_basename = args.notebook+'`date +%Y-%m-%d_%H:%M:%S`'
     to_format = args.to
-    if args.output:
-        output_fname = args.output
-        if to_format is None:
-            basename, ext = os.path.splitext(args.notebook)
+    output_fname = args.output
+    # determine to_format: first from the option, then from output filename,
+    # then markdown by default.
+    if to_format is None:
+        #(infer from output)
+        if output_fname:
+            basename, ext = os.path.splitext(output_fname)
             if ext:
                 ext = ext[1:]
-            ext_map = {'ipynb': 'notebook', 'md': 'markdown', 'txt': 'asciidoc'}
-            to_format = ext_map.get(ext, ext)
+            to_format = EXT_MAP.get(ext, (ext or 'ipynb'))
+        else:
+            to_format = DEFAULT_FORMAT
+
+    # --save inferrs a filename from the input filename
+    if args.save:
+        basename, oldext = os.path.splitext(args.notebook)
+        if oldext:
+            oldext = oldext[1:]
+        ext = FORMAT_MAP.get(to_format, to_format)
+        if ext == oldext:
+            basename += '.nbscript'
+        output_fname = basename + '.' + ext
+
+    # Make the saving arguments.  Stdout if a filename not given, otherwise to
+    # the filename given.
+    if output_fname is None:
+        output = ['--stdout', '--to', to_format]
+    else:
+        # output_filename is defined
         if args.timestamp:
-            basename += time.strftime('.%Y-%m-%d_%H:%M:%S')
-        output_fname = basename + '.' + os.path.ext
-        output = ['--output', output_fname, '--to', to_format]
+            # adjust output filename
+            basename, ext = os.path.splitext(output_fname)
+            if args.timestamp:
+                basename += time.strftime('.%Y-%m-%d_%H:%M:%S')
+            output_fname = basename + ext
         if output_fname == args.notebook:
             raise ValueError("Input name is the same as the output name, so refusing to convert")
-    elif to_format:
-        output = ['--stdout', '--to', to_format]
-    # No output filename given: to stdout
-    else:
-        output = ['--stdout', '--to', 'markdown']
+        output = ['--output', output_fname, '--to', to_format]
 
-    os.environ['NBSCRIPT_RUNNING'] = 'True'
+    # Do the conversion
     cmd_nbconvert = ['jupyter', 'nbconvert',
                     '--execute', '--allow-errors', '--ExecutePreprocessor.timeout=None',
                     *output, *nbconvert_args,
@@ -95,8 +135,9 @@ def nbscript(argv=sys.argv[1:]):
     LOG.debug('NB_ARGV: %s', os.environ.get('NB_ARGV'))
     sys.stdout.flush()
 
-    p = subprocess.Popen(cmd_nbconvert)
-    p.wait()
+    with setenv_context('NBSCRIPT_RUNNING', 'True'):
+        p = subprocess.Popen(cmd_nbconvert)
+        p.wait()
 
     return(p.returncode)
 
