@@ -1,41 +1,16 @@
-# This is a file
 # pylint: disable=unused-argument,redefined-outer-name
 
-import contextlib
 import glob
 import logging
 import os
 from os.path import join, dirname
-import shutil
-import tempfile
 import time
 
 import pytest
 
 from nbscript.nbscript import nbscript, LOG as nbscript_LOG
 nbscript_LOG.setLevel(logging.DEBUG)
-
-
-@contextlib.contextmanager
-def chdir_context(name):
-    old = os.getcwd()
-    os.chdir(name)
-    yield
-    os.chdir(old)
-
-@pytest.fixture
-def tdir():
-    tmpdir = tempfile.mkdtemp(prefix='nbscript-test')
-    shutil.copy(join(dirname(__file__), 'testdata', 'one.ipynb'), tmpdir)
-    with chdir_context(tmpdir):
-        yield tmpdir
-    shutil.rmtree(tmpdir)
-
-def assert_out(fname):
-    if not os.path.exists(fname):
-        print('directory contains:', os.listdir(dirname(fname) or '.'))
-    assert os.path.exists(fname)
-    assert '0123456789' in open(fname).read()
+from .testutil import tdir, assert_out
 
 def test_basic_stdout(tdir, capfd):
     """Test notebook run on stdout"""

@@ -39,10 +39,10 @@ def setenv_context(key, value):
     if old is None:   del os.environ[key]
     else:             os.environ[key] = old
 
-def nbscript(argv=sys.argv[1:]):
+def nbscript(argv=sys.argv[1:], _return_names=False):
     if os.environ.get('NBSCRIPT_RUNNING') is not None:
         LOG.critical("Detected that we are already in snotebook... not executing again.")
-        exit(0)
+        sys.exit(0)
 
     parser_outer = argparse.ArgumentParser(usage="nbscript [nbscript and nbconvert args] notebook [nb_argv ...]")
     parser_outer.add_argument("--to", help="Convert to this format (same as nbconvert --to option).")
@@ -116,6 +116,7 @@ def nbscript(argv=sys.argv[1:]):
 
     # Make the saving arguments.  Stdout if a filename not given, otherwise to
     # the filename given.
+    output_fname_before_timestamp = output_fname # pylint: disable=possibly-unused-variable
     if output_fname is None:
         output = ['--stdout', '--to', to_format]
     else:
@@ -129,6 +130,9 @@ def nbscript(argv=sys.argv[1:]):
         if output_fname == args.notebook:
             raise ValueError("Input name is the same as the output name, so refusing to convert")
         output = ['--output', output_fname, '--to', to_format]
+
+    if _return_names:
+        return locals()
 
     # Do the conversion
     cmd_nbconvert = ['jupyter', 'nbconvert',
