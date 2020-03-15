@@ -85,9 +85,7 @@ def snotebook(argv=sys.argv[1:]):
 
     # If there is no output filename, then we need to --save it.
     if not (args.srun or args.raw):
-        print(1)
         if not nbscript_locals['output_fname']:
-            print(2)
             options_nbscript.append('--save')
             cmd_nbscript = make_cmd_nbscript()
             LOG.debug('cmd_nbscript: %s', cmd_nbscript)
