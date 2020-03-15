@@ -22,7 +22,8 @@ if 'NB_ARGV' in os.environ:
 else:
     argv = None
 
-DEFAULT_FORMAT = 'markdown'
+DEFAULT_FORMAT_STDOUT = 'asciidoc'
+DEFAULT_FORMAT_FILE = 'ipynb'
 # extension  -->  nbconvert --to format
 EXT_MAP = {'ipynb': 'notebook', 'md': 'markdown', 'txt': 'asciidoc'}
 # nbconvert --to format  -->  extension
@@ -95,9 +96,13 @@ def nbscript(argv=sys.argv[1:]):
             basename, ext = os.path.splitext(output_fname)
             if ext:
                 ext = ext[1:]
-            to_format = EXT_MAP.get(ext, (ext or 'ipynb'))
+            if ext not in EXT_MAP:
+                raise RuntimeError("If saving to a file, you must give a known extension or use --to=FORMAT")
+            to_format = EXT_MAP.get(ext)
+        elif args.save:
+            to_format = DEFAULT_FORMAT_FILE
         else:
-            to_format = DEFAULT_FORMAT
+            to_format = DEFAULT_FORMAT_STDOUT
 
     # --save inferrs a filename from the input filename
     if args.save:
@@ -106,7 +111,7 @@ def nbscript(argv=sys.argv[1:]):
             oldext = oldext[1:]
         ext = FORMAT_MAP.get(to_format, to_format)
         if ext == oldext:
-            basename += '.nbscript'
+            basename += '.out'
         output_fname = basename + '.' + ext
 
     # Make the saving arguments.  Stdout if a filename not given, otherwise to

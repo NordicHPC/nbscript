@@ -18,6 +18,7 @@ jobs:
         run: |
           pip install -r requirements.txt -r requirements-dev.txt
           pip install pytest
+          pip install .
       - name: pytest
         run: |
           pytest .

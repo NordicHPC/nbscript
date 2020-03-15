@@ -49,10 +49,10 @@ def test_basic_save(tdir):
     assert_out('out.md')
 
 @pytest.mark.parametrize("fmt,output",
-                         [('',           'one.md'),
+                         [('',           'one.out.ipynb'),
                           ('markdown',   'one.md'),
                           #('asciidoc',   'one.txt'),   # adds .asciidoc as file name extension
-                          ('notebook',   'one.nbscript.ipynb'),
+                          ('notebook',   'one.out.ipynb'),
                          ])
 def test_save(tdir, fmt, output):
     to = ['--to', fmt] if fmt else []
@@ -62,7 +62,7 @@ def test_save(tdir, fmt, output):
 def test_timestamp_save(tdir):
     nbscript(['--save', '--timestamp', 'one.ipynb'])
     print(os.listdir('.'))
-    output = glob.glob('*.md')[0]
+    output = glob.glob('*.out.*.ipynb')[0]
     assert time.strftime('%Y-%m-%d') in output
 
 def test_timestamp_filename(tdir):

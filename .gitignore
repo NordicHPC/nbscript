@@ -1,2 +1,3 @@
 /*.egg-info
 /.cache
+.ipynb_checkpoints
