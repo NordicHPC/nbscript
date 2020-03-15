@@ -3,7 +3,7 @@
 Jupyter notebooks are designed almost exclusively for interactive use, but
 many people want to use them for heavy-duty computational usage.
 `nbscript` is designed to process notebooks as scripts and provide the
-most common script functions: clear start and end, arguments (argv),
+most common script features: clear start and end, arguments (argv),
 (stdin) and stdout, and so on.
 
 We also take the perspective of batch processing, so also have a wrapper
@@ -19,10 +19,34 @@ separate from notebooks... but sometimes people prefer to stay in
 notebooks.
 
 Many other modules (see references below) try to allow notebooks to be
-run, but we take the viewpoint that the traditional scripting
+run, but we take the viewpoint that the traditional UNIX script
 interface is good and notebooks should be made like scripts: `nbscript
 notebook.ipynb` should behave similarly to `python notebook.py`.  This
 also allows us to provide a logical pathway to non-notebook programs.
+
+
+
+## Quick examples of invocation
+
+`nbscript`:
+
+* `nbscript input.ipynb [argv]`: runs, prints results as asciidoc to
+  stdout.  Within the script, `from nbscript import argv` to get the
+  argv.
+
+* `nbscript --save input.ipynb`: runs, saves to `input.out.ipynb`
+
+* `nbscript --save --timestamp input.ipynb`: runs, saves to
+  `input.out.TIMESTAMP.ipynb`
+
+`snotebook`:
+
+* `snotebook [slurm opts] input.ipynb`: submits to slurm with
+  `sbatch`, using the `--save` option like you see above.  Slurm
+  output is in `input.out.ipynb.log`.
+
+* `snotebook [slurm opts] --- --timestamp input.ipynb`: like above,
+  but adds `--timestamp` option like you see above.
 
 
 
@@ -38,7 +62,7 @@ Run a notebook from the command line:
 * `nbscript nb.ipynb arg1 arg2 ...`.  Within the notebook, you can
   access the arguments by `import nbscript ; nbscript.argv` (these are
   currently transferred via environment variables).  Note that `argv[0]`
-  is the script name if it is known, otherwise `None`.
+  is the notebook name if it is known, otherwise `None`.
 
 * By default, only the output of the cells is printed to stdout.
   Options may used to save the notebook to a file in any of
@@ -149,3 +173,14 @@ which happens to be run.  that would have run, arguments, stdout, etc.
 
 All of these accomplish the same thing but have different (a few) or
 no (most) ways of passing parameters.
+
+
+
+## Development status and maintnance
+
+Currently this is a usable alpha - the main invocations work, but get
+too creative and expect problems!  There are tests to verify the
+important stuff works, though.
+
+Maintainer: Richard Darst, Aalto University.  Feedback and
+improvements encouraged.
