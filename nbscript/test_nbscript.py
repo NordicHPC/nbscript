@@ -10,7 +10,7 @@ import pytest
 
 from nbscript.nbscript import nbscript, LOG as nbscript_LOG
 nbscript_LOG.setLevel(logging.DEBUG)
-from .testutil import tdir, assert_out
+from .testutil import assert_out, chdir_context, tdir
 
 def test_basic_stdout(tdir, capfd):
     """Test notebook run on stdout"""
@@ -23,21 +23,61 @@ def test_basic_save(tdir):
     nbscript(['-o', 'out.md', 'one.ipynb'])
     assert_out('out.md')
 
-@pytest.mark.parametrize("fmt,output",
-                         [('',           'one.out.ipynb'),
-                          ('markdown',   'one.md'),
-                          #('asciidoc',   'one.txt'),   # adds .asciidoc as file name extension
-                          ('notebook',   'one.out.ipynb'),
-                         ])
+test_formats = [('', 'one.out.ipynb'),
+                ('markdown',   'one.md'),
+                #('asciidoc',   'one.txt'),   # adds .asciidoc as file name extension
+                ('notebook',   'one.out.ipynb'),
+                ]
+@pytest.mark.parametrize("fmt,output", test_formats)
 def test_save(tdir, fmt, output):
     to = ['--to', fmt] if fmt else []
     nbscript(to + ['--save', 'one.ipynb'])
     assert_out(output)
 
+@pytest.mark.parametrize("fmt,output", test_formats)
+def test_save_subdir(tdir, fmt, output):
+    """Test when input is ../subdir/X.ipynb"""
+    os.mkdir('subdir')
+    os.rename('one.ipynb', 'subdir/one.ipynb')
+    to = ['--to', fmt] if fmt else []
+    nbscript(to + ['--save', 'subdir/one.ipynb'])
+    assert_out('subdir/'+output)
+
+@pytest.mark.parametrize("fmt,output", test_formats)
+def test_save_parentdir(tdir, fmt, output):
+    """Test when input is ../parentdir/X.ipynb"""
+    os.mkdir('subdir')
+    os.mkdir('parentdir')
+    os.rename('one.ipynb', 'parentdir/one.ipynb')
+    with chdir_context('subdir'):
+        to = ['--to', fmt] if fmt else []
+        nbscript(to + ['--save', '../parentdir/one.ipynb'])
+    assert_out('parentdir/'+output)
+
+@pytest.mark.parametrize("fmt,output", test_formats)
+def test_save_abspath(tdir, fmt, output):
+    """Test when input is abspath(../parentdir/X.ipynb)"""
+    os.mkdir('subdir')
+    os.mkdir('parentdir')
+    os.rename('one.ipynb', 'parentdir/one.ipynb')
+    with chdir_context('subdir'):
+        to = ['--to', fmt] if fmt else []
+        nbscript(to + ['--save', os.path.abspath('../parentdir/one.ipynb')])
+    assert_out('parentdir/'+output)
+
 def test_timestamp_save(tdir):
     nbscript(['--save', '--timestamp', 'one.ipynb'])
     print(os.listdir('.'))
     output = glob.glob('*.out.*.ipynb')[0]
+    assert time.strftime('%Y-%m-%d') in output
+
+def test_timestamp_save_subdir(tdir):
+    """Test when input is subbir/X.ipynb"""
+    os.mkdir('subdir')
+    os.rename('one.ipynb', 'subdir/one.ipynb')
+    nbscript(['--save', '--timestamp', 'subdir/one.ipynb'])
+    print(os.listdir('subdir'))
+    output = glob.glob('subdir/*.out.*.ipynb')[0]
     assert time.strftime('%Y-%m-%d') in output
 
 def test_timestamp_filename(tdir):

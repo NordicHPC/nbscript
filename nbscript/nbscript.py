@@ -129,7 +129,12 @@ def nbscript(argv=sys.argv[1:], _return_names=False):
             output_fname = basename + ext
         if output_fname == args.notebook:
             raise ValueError("Input name is the same as the output name, so refusing to convert")
-        output = ['--output', output_fname, '--to', to_format]
+        # "--output-dir=." is added, because by default the dirname of the
+        # input file gets unconditionally joined to the output path.  The other
+        # alternative is abspath of the output filename.
+        # see FilesWriter.build_directory in
+        #   https://nbconvert.readthedocs.io/en/latest/config_options.html
+        output = ['--output-dir=.', '--output', output_fname, '--to', to_format]
 
     if _return_names:
         return locals()
