@@ -26,12 +26,14 @@ def _tdir(ipynb_file='one.ipynb'):
 @pytest.fixture
 def tdir():
     """Temporary testing dir, using one.ipynb"""
-    yield from _tdir('one.ipynb')
+    for x in _tdir('one.ipynb'):
+        yield x
 
 @pytest.fixture
 def tdir_slurm():
     """Temporary testing dir, using slurm.ipynb"""
-    yield from _tdir('slurm.ipynb')
+    for x in _tdir('slurm.ipynb'):
+        yield x
 
 def assert_out(fname):
     """Assert a certain filename is written and contains the marker for successful integration"""

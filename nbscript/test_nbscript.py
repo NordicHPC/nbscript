@@ -8,7 +8,7 @@ import time
 
 import pytest
 
-from nbscript.nbscript import nbscript, LOG as nbscript_LOG
+from .nbscript import nbscript, LOG as nbscript_LOG
 nbscript_LOG.setLevel(logging.DEBUG)
 from .testutil import assert_out, chdir_context, tdir
 

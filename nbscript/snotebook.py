@@ -7,6 +7,11 @@ import re
 import shlex
 import subprocess
 import sys
+try:
+    from shlex import quote as shlex_quote
+except ImportError:
+    from pipes import quote as shlex_quote
+
 
 from . import nbscript
 
@@ -70,10 +75,9 @@ def snotebook(argv=sys.argv[1:]):
 
     def make_cmd_nbscript():
         return ['nbscript',
-                *options_nbscript,
+                ] + options_nbscript + [
                 args.notebook,
-                *args.argv,
-                ]
+                ] + args.argv
     cmd_nbscript = make_cmd_nbscript()
     LOG.debug('cmd_nbscript: %s', cmd_nbscript)
 
@@ -113,7 +117,7 @@ def snotebook(argv=sys.argv[1:]):
 #!/bin/bash
 set -x
 {nbscript}
-""".format(nbscript=" ".join(shlex.quote(x) for x in cmd_nbscript))
+""".format(nbscript=" ".join(shlex_quote(x) for x in cmd_nbscript))
 
     LOG.debug('cmd_submit: %s', batch_command)
 

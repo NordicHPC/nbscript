@@ -15,7 +15,14 @@ import nbformat
 import nbconvert
 
 LOG = logging.getLogger('nbscript')
-logging.lastResort.setLevel(logging.DEBUG)
+LOG.setLevel(logging.DEBUG)
+if sys.version_info[0] >= 3:
+    logging.lastResort.setLevel(logging.INFO)
+else:
+    ch = logging.lastResort = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
+    LOG.addHandler(ch)
+
 
 if 'NB_ARGV' in os.environ:
     argv = json.loads(os.environ['NB_ARGV'])
@@ -66,7 +73,7 @@ def nbscript(argv=sys.argv[1:], _return_names=False):
     args, nbconvert_args        = parser_outer.parse_known_args(argv)
 
     if args.verbose:
-        LOG.setLevel(logging.DEBUG)
+        logging.lastResort.setLevel(logging.DEBUG)
     LOG.debug('args: %s', args)
     LOG.debug("nbconvert_args: %s", nbconvert_args)
     sys.stdout.flush()
@@ -142,7 +149,7 @@ def nbscript(argv=sys.argv[1:], _return_names=False):
     # Do the conversion
     cmd_nbconvert = ['jupyter', 'nbconvert',
                     '--execute', '--allow-errors', '--ExecutePreprocessor.timeout=None',
-                    *output, *nbconvert_args,
+                    ] + output + nbconvert_args + [
                     args.notebook,
                     ]
     LOG.debug('cmd_nbconvert: %s', cmd_nbconvert)

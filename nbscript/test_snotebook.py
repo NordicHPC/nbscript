@@ -1,10 +1,10 @@
 # pylint: disable=unused-argument,redefined-outer-name
 import logging
 
-from nbscript import snotebook
+from . import snotebook
 from .testutil import tdir_slurm, assert_sublist
 
-from nbscript.nbscript import LOG as nbscript_LOG
+from .nbscript import LOG as nbscript_LOG
 nbscript_LOG.setLevel(logging.DEBUG)
 
 def test_snotebook_basic(tdir_slurm, monkeypatch):
