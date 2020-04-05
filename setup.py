@@ -13,11 +13,11 @@ setuptools.setup(
     name="nbscript",
     version=version,
     author="Richard Darst",
-    author_email="author@example.com",
+    #author_email="author@example.com",
     description="Run Jupyter notebooks like shell scripts",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/AaltoScienceIT/nbscript",
+    url="https://github.com/NordicHPC/nbscript",
     packages=setuptools.find_packages(),
     python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*,",
     #py_modules=["nbscript"],
@@ -29,6 +29,7 @@ setuptools.setup(
         ],
     },
     classifiers=[
+        "Programming Language :: Python :: 2",
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
@@ -36,3 +37,6 @@ setuptools.setup(
         "Framework :: Jupyter",
     ],
 )
+# python setup.py sdist bdist_wheel
+# twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+# twine upload dist/*
