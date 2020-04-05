@@ -7,7 +7,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8]
+        python-version: [3.5, 3.6, 3.7, 3.8]
+      fail-fast: false
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
@@ -16,8 +17,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt -r requirements-dev.txt
-          pip install pytest
+          pip install -r requirements-dev.txt
           pip install .
       - name: pytest
         run: |
