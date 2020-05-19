@@ -135,6 +135,24 @@ Saving output state:
 
 
 
+## Server extension
+
+Nbscript provides a server extension which allows you to submit
+requests for synchronous/asynchronous batch jobs.  For example, you
+can use the URL
+`http://127.0.0.1:8888/nbscript/batch?path=nbscript/testdata/one.ipynb`
+to run a test command.
+
+To enable the extension:
+
+```
+jupyter serverextension enable nbscript.server_extensions.batch
+```
+
+Currently, there is not much documentation - the code should be easy
+to understand.
+
+
 ## See also
 
 There are many commands to execute notebooks, but most of these do not
