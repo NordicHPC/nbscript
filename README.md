@@ -141,7 +141,8 @@ Nbscript provides a server extension which allows you to submit
 requests for synchronous/asynchronous batch jobs.  For example, you
 can use the URL
 `http://127.0.0.1:8888/nbscript/batch?path=nbscript/testdata/one.ipynb`
-to run a test command.
+to run a test command.  By default, this runs `nbscript --save
+--timestamp {path}`
 
 To enable the extension:
 
@@ -150,7 +151,10 @@ jupyter serverextension enable nbscript.server_extensions.batch
 ```
 
 Currently, there is not much documentation - the code should be easy
-to understand.
+to understand.  Currently, configuration is hard-coded, see the code.
+Return value is a json object (which you can figure out from the
+code).
+
 
 
 ## See also

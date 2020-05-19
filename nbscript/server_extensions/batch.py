@@ -11,8 +11,8 @@ import os
 import subprocess
 
 from tornado import web
-from traitlets import List, Unicode, Union, HasTraits
-#from traitlets.config.configurable import Configurable
+from traitlets import Bool, List, Unicode, Union, HasTraits
+from traitlets.config import Configurable
 #from traitlets import Application
 
 from jupyter_core.paths import jupyter_config_path
@@ -20,14 +20,28 @@ from notebook.utils import url_path_join as ujoin
 from notebook.base.handlers import IPythonHandler
 
 
-class NbscriptBatch(IPythonHandler):
+# This does NOT yet work!
+class NBScriptBatch(Configurable):
+    """Configuration for nbscript batch extension.
 
-    batch_command = ['nbscript', '--save', '--timestamp']
-    asynchronous = False
+    In jupyter_notebook_config.py, you can set, for example::
+
+        c.NBScriptBatch.batch_command = ['x', 'y']
+
+    """
+    batch_command = Union([List(['nbscript', '--save', '--timestamp']),
+                           Unicode("")],
+                          help="Configure batch command").tag(config=True)
+    asynchronous = Bool(False)
+
+
+class NbscriptBatchHandler(IPythonHandler):
+
     # jupyter notebook --JupyterBatch.batch_command="xxx"
     #batch_command = Union([List(['nbscript', '--save', '--timestamp']), Unicode("")],
     #                       help="Configure batch command").tag(config=True)
-
+    batch_command = ['nbscript', '--save', '--timestamp']
+    asynchronous = False
 
     @web.authenticated
     def get(self):
@@ -41,29 +55,29 @@ class NbscriptBatch(IPythonHandler):
         HTTP return body:
             JSON object
         """
-        print('setting', self.settings)
+        print('setting', NBScriptBatch().batch_command)
 
         # get_argument returns both GET query arguments and POST body arguments
         path = self.get_argument('path')
         # request body: self.request.body
 
         fullpath = os.path.join(self.settings['notebook_dir'], path)
-        print('a'*10, fullpath)
+        # print('a'*10, fullpath)
 
         base_cmd = self.batch_command
-        print('b'*10, base_cmd)
+        # print('b'*10, base_cmd)
         if isinstance(base_cmd, str):
             # String command: substitute {} for fullpath
-            if '{}' in base_cmd:
-                cmd = base_cmd.format(fullpath)
+            if '{path}' in base_cmd:
+                cmd = base_cmd.format(path=fullpath)
             else:
                 # if no '{}' in the string, just appendit
                 cmd = base_cmd + ' ' + fullpath
         else:
             # If list command, substitute '{}', and if that doesn't
             # exist in any arguments, append it.
-            if any('{}' in x for x in base_cmd):
-                cmd = [x.format(fullpath) for x in base_cmd]
+            if any('{path}' in x for x in base_cmd):
+                cmd = [x.format(path=fullpath) for x in base_cmd]
             else:
                 cmd = base_cmd + [fullpath]
 
@@ -90,8 +104,9 @@ class NbscriptBatch(IPythonHandler):
 
 
 handlers = [
-    (r"/nbscript/batch", NbscriptBatch),
+    (r"/nbscript/batch", NbscriptBatchHandler),
     ]
+
 
 def load_jupyter_server_extension(nbapp):
     """Jupyter server-extension load hook"""
