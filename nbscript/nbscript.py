@@ -37,6 +37,14 @@ EXT_MAP = {'ipynb': 'notebook', 'md': 'markdown', 'txt': 'asciidoc'}
 FORMAT_MAP = {v: k for k, v in EXT_MAP.items()}
 
 
+def is_active():
+    """Detect if nbscript is running this Python interperter"""
+    if 'NBSCRIPT_RUNNING' in os.environ:
+        return True
+    return False
+
+
+
 @contextlib.contextmanager
 def setenv_context(key, value):
     """Set an environment variable as a context manager, restore it after"""

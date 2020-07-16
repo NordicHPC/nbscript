@@ -85,6 +85,9 @@ You may also run a notebook via IPython extensions:
 
 Interface within notebooks:
 
+* `import nbscript ; nbscript.is_active()` will return `True` if the
+  current Python interpreter is being run via nbscript.
+
 * `import nbscript ; nbscript.argv` is the `argv` in analogy to
   `sys.argv`.  (json-encoded in the environment variable `NB_ARGV`).
 
