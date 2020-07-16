@@ -23,12 +23,6 @@ else:
     ch.setLevel(logging.DEBUG)
     LOG.addHandler(ch)
 
-
-if 'NB_ARGV' in os.environ:
-    argv = json.loads(os.environ['NB_ARGV'])
-else:
-    argv = None
-
 DEFAULT_FORMAT_STDOUT = 'asciidoc'
 DEFAULT_FORMAT_FILE = 'ipynb'
 # extension  -->  nbconvert --to format
@@ -37,6 +31,12 @@ EXT_MAP = {'ipynb': 'notebook', 'md': 'markdown', 'txt': 'asciidoc'}
 FORMAT_MAP = {v: k for k, v in EXT_MAP.items()}
 
 
+
+if 'NB_ARGV' in os.environ:
+    argv = json.loads(os.environ['NB_ARGV'])
+else:
+    argv = None
+
 def is_active():
     """Detect if nbscript is running this Python interperter"""
     if 'NBSCRIPT_RUNNING' in os.environ:
@@ -44,15 +44,30 @@ def is_active():
     return False
 
 
+def output_filename():
+    """Returns filename for --save, or None.
+
+    This is a convenience method for saving other output files, such as
+    the state.  Note that relying on it too much can lead to
+    complexity, since it is a abstraction layer violation!
+    """
+    if 'NBSCRIPT_OUTPUT_FILENAME' in os.environ:
+        return
+    os.environ['NBSCRIPT_OUTPUT_FILENAME']
+
 
 @contextlib.contextmanager
-def setenv_context(key, value):
+def setenv_context(mapping):
     """Set an environment variable as a context manager, restore it after"""
-    old = os.environ.get(key)
-    os.environ[key] = value
+    old = { }
+    for key, value in mapping.items():
+        old[key] = os.environ.get(key)
+        os.environ[key] = value
     yield
-    if old is None:   del os.environ[key]
-    else:             os.environ[key] = old
+    for key, value in old.items():
+        if value is None:   del os.environ[key]
+        else:               os.environ[key] = old[key]
+
 
 def nbscript(argv=sys.argv[1:], _return_names=False):
     if os.environ.get('NBSCRIPT_RUNNING') is not None:
@@ -86,9 +101,10 @@ def nbscript(argv=sys.argv[1:], _return_names=False):
     LOG.debug("nbconvert_args: %s", nbconvert_args)
     sys.stdout.flush()
 
+    env = { }
 
-    os.environ['NB_NAME'] = args.notebook
-    os.environ['NB_ARGV'] = json.dumps([args.notebook] + args.nb_argv)
+    env['NB_NAME'] = args.notebook
+    env['NB_ARGV'] = json.dumps([args.notebook] + args.nb_argv)
     #if args.nbconvert_args:
     #    nbconvert_args = args.nbconvert_args.split()
     #else:
@@ -150,6 +166,7 @@ def nbscript(argv=sys.argv[1:], _return_names=False):
         # see FilesWriter.build_directory in
         #   https://nbconvert.readthedocs.io/en/latest/config_options.html
         output = ['--output-dir=.', '--output', output_fname, '--to', to_format]
+        env['NBSCRIPT_OUTPUT_FILENAME'] = output_fname
 
     if _return_names:
         return locals()
@@ -164,7 +181,9 @@ def nbscript(argv=sys.argv[1:], _return_names=False):
     LOG.debug('NB_ARGV: %s', os.environ.get('NB_ARGV'))
     sys.stdout.flush()
 
-    with setenv_context('NBSCRIPT_RUNNING', 'True'):
+    # Actually run it
+    env['NBSCRIPT_RUNNING'] = 'True'
+    with setenv_context(env):
         p = subprocess.Popen(cmd_nbconvert)
         p.wait()
 
